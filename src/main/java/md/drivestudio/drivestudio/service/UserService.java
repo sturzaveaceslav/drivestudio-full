@@ -6,18 +6,16 @@ import md.drivestudio.drivestudio.dto.RegisterRequest;
 import md.drivestudio.drivestudio.dto.UserResponse;
 import md.drivestudio.drivestudio.entity.User;
 import md.drivestudio.drivestudio.repository.UserRepository;
-import md.drivestudio.drivestudio.util.JwtUtil;
+import md.drivestudio.drivestudio.jwt.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -46,11 +44,5 @@ public class UserService implements UserDetailsService {
 
         String token = jwtUtil.generateToken(user);
         return new UserResponse(user.getUsername(), token);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

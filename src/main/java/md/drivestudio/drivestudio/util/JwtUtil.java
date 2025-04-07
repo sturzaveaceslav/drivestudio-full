@@ -1,4 +1,4 @@
-package md.drivestudio.drivestudio.util;
+package md.drivestudio.drivestudio.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -14,7 +14,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "secret";
+    private final String SECRET_KEY = "secret123"; // 👉 schimbă pentru producție
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

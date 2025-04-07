@@ -2,7 +2,6 @@ package md.drivestudio.drivestudio.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
@@ -10,7 +9,6 @@ import java.util.Date;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
 public class UploadedFile {
 
     @Id
@@ -19,9 +17,11 @@ public class UploadedFile {
 
     private String filename;
     private String fileType;
-    private String path;
     private long size;
-
-    @Temporal(TemporalType.TIMESTAMP)
+    private String path;
     private Date uploadDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id") // creează coloana "user_id" în tabel
+    private User user;
 }

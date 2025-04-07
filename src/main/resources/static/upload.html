@@ -1,16 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Upload fișier</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>DriveStudio Upload</title>
 </head>
 <body>
-<h2>Upload fișier</h2>
+<h1>Încarcă fișier</h1>
 <form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" id="file" name="file" required><br>
-    <button type="submit">Upload</button>
+    <input type="file" name="file" id="fileInput">
+    <button type="submit">Încarcă</button>
 </form>
-<script src="js/app.js"></script>
+<p id="message"></p>
+
+<script>
+    document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const fileInput = document.getElementById("fileInput");
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const response = await fetch("http://localhost:8080/api/files/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const text = await response.text();
+        document.getElementById("message").textContent = text;
+    });
+</script>
 </body>
 </html>
