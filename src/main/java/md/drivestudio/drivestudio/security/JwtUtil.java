@@ -1,4 +1,4 @@
-package md.drivestudio.drivestudio.jwt;
+package md.drivestudio.drivestudio.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -14,7 +14,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final String SECRET_KEY = "secret123"; // 👉 schimbă pentru producție
+    private final String SECRET_KEY = "secret_key_12345";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -37,7 +37,7 @@ public class JwtUtil {
                 .getBody();
     }
 
-    private Boolean isTokenExpired(String token) {
+    private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
@@ -47,8 +47,7 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts
-                .builder()
+        return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -57,8 +56,8 @@ public class JwtUtil {
                 .compact();
     }
 
-    public Boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 }
