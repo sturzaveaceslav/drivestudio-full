@@ -1,6 +1,6 @@
 package md.drivestudio.drivestudio.repository;
 
-import md.drivestudio.drivestudio.entity.User;
+import md.drivestudio.drivestudio.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

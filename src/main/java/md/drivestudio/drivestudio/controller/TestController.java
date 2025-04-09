@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestController {
 
-    @GetMapping("/")
-    public String home() {
-        return "DriveStudio rulează cu succes! 🚀";
+    // Folosește o rută diferită, ca să nu existe conflict cu / din PageController
+    @GetMapping("/test")
+    public String testHome() {
+        return "Hello from test home!";
     }
 }

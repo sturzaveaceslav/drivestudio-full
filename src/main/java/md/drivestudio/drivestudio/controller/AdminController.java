@@ -1,6 +1,6 @@
 package md.drivestudio.drivestudio.controller;
 
-import md.drivestudio.drivestudio.entity.User;
+import md.drivestudio.drivestudio.model.User;
 import md.drivestudio.drivestudio.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
