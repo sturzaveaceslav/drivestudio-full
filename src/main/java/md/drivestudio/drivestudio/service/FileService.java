@@ -1,64 +1,48 @@
 package md.drivestudio.drivestudio.service;
 
-import lombok.RequiredArgsConstructor;
-import md.drivestudio.drivestudio.entity.UploadedFile;
-import md.drivestudio.drivestudio.entity.User;
-import md.drivestudio.drivestudio.repository.UploadedFileRepository;
-import md.drivestudio.drivestudio.repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
+import md.drivestudio.drivestudio.model.FileInfo;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Date;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class FileService {
 
-    private final UploadedFileRepository fileRepository;
-    private final UserRepository userRepository;
+    private final String uploadBaseDir = "F:/DriveStudioNou/uploads";
 
-    private final String uploadDirectory = System.getProperty("user.dir") + "/uploads";
+    public List<FileInfo> listFiles(String username) {
+        List<FileInfo> fileInfos = new ArrayList<>();
+        Path userDir = Paths.get(uploadBaseDir, username);
 
-    public void storeFile(MultipartFile file) throws IOException {
-        File dir = new File(uploadDirectory);
-        if (!dir.exists()) {
-            dir.mkdirs(); // creează folderul dacă nu există
+        File folder = userDir.toFile();
+        if (folder.exists() && folder.isDirectory()) {
+            for (File file : folder.listFiles()) {
+                if (file.isFile()) {
+                    String url = "http://localhost:8080/api/files/download/" + username + "/" + file.getName();
+                    fileInfos.add(new FileInfo(file.getName(), url));
+                }
+            }
         }
 
-        if (file.isEmpty()) {
-            throw new RuntimeException("Fișierul este gol.");
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String uniqueFileName = UUID.randomUUID() + "_" + originalFilename;
-        String filePath = uploadDirectory + "/" + uniqueFileName;
-
-        File dest = new File(filePath);
-        file.transferTo(dest);
-
-        // Obține utilizatorul logat
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Creează obiectul UploadedFile
-        UploadedFile uploadedFile = new UploadedFile();
-        uploadedFile.setFilename(originalFilename);
-        uploadedFile.setFileType(file.getContentType());
-        uploadedFile.setSize(file.getSize());
-        uploadedFile.setPath(filePath);
-        uploadedFile.setUploadDate(new Date());
-        uploadedFile.setUser(user); // Legătură cu userul
-
-        fileRepository.save(uploadedFile);
+        return fileInfos;
     }
 
-    public List<UploadedFile> getAllFiles() {
-        return fileRepository.findAll();
+    public ResponseEntity<byte[]> downloadFile(String username, String fileName) {
+        try {
+            Path filePath = Paths.get(uploadBaseDir, username, fileName);
+            byte[] fileBytes = Files.readAllBytes(filePath);
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                    .body(fileBytes);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

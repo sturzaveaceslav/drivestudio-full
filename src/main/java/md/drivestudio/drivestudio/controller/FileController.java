@@ -1,34 +1,36 @@
 package md.drivestudio.drivestudio.controller;
 
-import lombok.RequiredArgsConstructor;
-import md.drivestudio.drivestudio.entity.UploadedFile;
+import md.drivestudio.drivestudio.model.FileInfo;
 import md.drivestudio.drivestudio.service.FileService;
-import org.springframework.http.HttpStatus;
+import md.drivestudio.drivestudio.security.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/files")
-@RequiredArgsConstructor
 public class FileController {
 
-    private final FileService fileService;
+    @Autowired
+    private FileService fileService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            fileService.storeFile(file);
-            return ResponseEntity.ok("Fișierul a fost încărcat cu succes.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Eroare la încărcarea fișierului.");
-        }
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @GetMapping
+    public ResponseEntity<List<FileInfo>> listUserFiles(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        List<FileInfo> files = fileService.listFiles(username);
+        return ResponseEntity.ok(files);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<UploadedFile>> listAllFiles() {
-        return ResponseEntity.ok(fileService.getAllFiles());
+    @GetMapping("/download/{username}/{fileName}")
+    public ResponseEntity<byte[]> downloadFile(@PathVariable String username,
+                                               @PathVariable String fileName) {
+        return fileService.downloadFile(username, fileName);
     }
 }

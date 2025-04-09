@@ -1,6 +1,7 @@
 package md.drivestudio.drivestudio.controller;
 
-import md.drivestudio.drivestudio.dto.RegisterRequest;
+import lombok.RequiredArgsConstructor;
+import md.drivestudio.drivestudio.dto.UserRequest;
 import md.drivestudio.drivestudio.dto.UserResponse;
 import md.drivestudio.drivestudio.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -8,17 +9,18 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
+    @PostMapping("/register")
+    public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
+        return ResponseEntity.ok(userService.register(request));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
-        UserResponse response = userService.register(request);
-        return ResponseEntity.ok(response);
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> login(@RequestBody UserRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 }

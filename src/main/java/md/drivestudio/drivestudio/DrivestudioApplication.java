@@ -9,5 +9,4 @@ public class DrivestudioApplication {
     public static void main(String[] args) {
         SpringApplication.run(DrivestudioApplication.class, args);
     }
-
 }
