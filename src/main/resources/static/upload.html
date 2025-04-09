@@ -2,30 +2,133 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>DriveStudio Upload</title>
+    <title>Upload Fișiere - DriveStudio</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed #00d4ff;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .drop-zone.dragover {
+            background-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .file-preview {
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .btn-upload {
+            margin-top: 15px;
+        }
+
+        .success {
+            color: #00ff9d;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-<h1>Încarcă fișier</h1>
-<form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="file" id="fileInput">
-    <button type="submit">Încarcă</button>
-</form>
-<p id="message"></p>
+<div class="container">
+    <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
+    <h1>Fișierele Mele</h1>
+    ...
+    <footer>
+        <p>Powered by Slavon</p>
+    </footer>
+</div>
+
+<div class="container">
+    <h1>Încarcă un fișier</h1>
+
+    <div id="drop-zone" class="drop-zone">
+        Trage fișierul aici sau apasă pentru a selecta
+        <input type="file" id="file-input" hidden>
+    </div>
+
+    <div id="file-preview" class="file-preview"></div>
+
+    <button id="upload-btn" class="btn-download btn-upload">Upload</button>
+
+    <div id="upload-result" class="success"></div>
+
+    <footer><p>Powered by Slavon</p></footer>
+</div>
 
 <script>
-    document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+    const dropZone = document.getElementById("drop-zone");
+    const fileInput = document.getElementById("file-input");
+    const preview = document.getElementById("file-preview");
+    const uploadBtn = document.getElementById("upload-btn");
+    const result = document.getElementById("upload-result");
+
+    let selectedFile = null;
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", e => {
         e.preventDefault();
-        const fileInput = document.getElementById("fileInput");
+        dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", e => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect();
+    });
+
+    fileInput.addEventListener("change", handleFileSelect);
+
+    function handleFileSelect() {
+        selectedFile = fileInput.files[0];
+        if (selectedFile) {
+            preview.textContent = `Fișier selectat: ${selectedFile.name}`;
+        } else {
+            preview.textContent = "";
+        }
+    }
+
+    uploadBtn.addEventListener("click", () => {
+        if (!selectedFile) {
+            alert("Selectează un fișier mai întâi.");
+            return;
+        }
+
         const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
+        formData.append("file", selectedFile);
 
-        const response = await fetch("http://localhost:8080/api/files/upload", {
+        const token = localStorage.getItem("token");
+
+        fetch("/api/files/upload", {
             method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
             body: formData
-        });
-
-        const text = await response.text();
-        document.getElementById("message").textContent = text;
+        })
+            .then(res => res.text())
+            .then(msg => {
+                result.textContent = msg;
+                preview.textContent = "";
+                fileInput.value = "";
+                selectedFile = null;
+            })
+            .catch(err => {
+                result.textContent = "Eroare la upload.";
+                console.error(err);
+            });
     });
 </script>
 </body>

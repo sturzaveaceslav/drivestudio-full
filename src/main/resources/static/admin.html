@@ -1,0 +1,62 @@
+<script>
+  const token = localStorage.getItem("token");
+
+  fetch("/api/admin/users", {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  })
+          .then(res => res.json())
+          .then(users => {
+            const table = document.getElementById("user-rows");
+            users.forEach(username => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${username}</td>
+                <td><button class="btn-view" onclick="viewFiles('${username}', this)">Vezi fișiere</button></td>
+            `;
+              table.appendChild(row);
+            });
+          });
+
+  function viewFiles(username, button) {
+    fetch(`/api/admin/files/${username}`, {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    })
+            .then(res => res.json())
+            .then(files => {
+              let html = "<ul>";
+              files.forEach(f => {
+                const downloadUrl = `/uploads/${username}/${f}`;
+                html += `<li>
+                    ${f}
+                    <a href="${downloadUrl}" class="btn-download" download>Descarcă</a>
+                    <button class="btn-delete" onclick="deleteUserFile('${username}', '${f}', this)">Șterge</button>
+                </li>`;
+              });
+              html += "</ul>";
+              const td = button.parentElement;
+              td.innerHTML = html;
+            });
+  }
+
+  function deleteUserFile(username, fileName, button) {
+    fetch(`/api/admin/files/${username}/${fileName}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    })
+            .then(res => res.text())
+            .then(msg => {
+              alert(msg);
+              button.parentElement.remove();
+            })
+            .catch(err => {
+              alert("Eroare la ștergere.");
+              console.error(err);
+            });
+  }
+</script>

@@ -1,13 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Fișierele mele</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Fișierele Mele - DriveStudio</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .btn-delete {
+            background-color: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-delete:hover {
+            background-color: #cc0000;
+        }
+    </style>
 </head>
 <body>
-<h2>Lista fișierelor</h2>
-<ul id="fileList"></ul>
-<script src="js/app.js"></script>
+<div class="container">
+    <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
+    <h1>Fișierele Mele</h1>
+    ...
+    <footer>
+        <p>Powered by Slavon</p>
+    </footer>
+</div>
+
+<div class="container">
+    <h1>Fișierele Mele</h1>
+
+    <div id="file-list" class="file-list">
+        <p>Se încarcă fișierele...</p>
+    </div>
+
+    <footer>
+        <p>Powered by Slavon</p>
+    </footer>
+</div>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    fetch("/api/files/list", {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            const listContainer = document.getElementById("file-list");
+            listContainer.innerHTML = "";
+
+            if (data.length === 0) {
+                listContainer.innerHTML = "<p>Nu ai încărcat niciun fișier.</p>";
+                return;
+            }
+
+            data.forEach(link => {
+                const fileName = link.split("/").pop();
+                const item = document.createElement("div");
+                item.className = "file-item";
+                item.innerHTML = `
+                <span>${fileName}</span>
+                <div>
+                    <a href="${link}" class="btn-download" download>Descarcă</a>
+                    <button class="btn-delete" onclick="deleteFile('${fileName}', this)">Șterge</button>
+                </div>
+            `;
+                listContainer.appendChild(item);
+            });
+        })
+        .catch(err => {
+            console.error("Eroare la listare fișiere:", err);
+            document.getElementById("file-list").innerHTML = "<p>Eroare la încărcarea fișierelor.</p>";
+        });
+
+    function deleteFile(fileName, button) {
+        const token = localStorage.getItem("token");
+
+        fetch(`/api/files/delete/${fileName}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+            .then(res => res.text())
+            .then(msg => {
+                alert(msg);
+                button.closest(".file-item").remove(); // elimină din listă
+            })
+            .catch(err => {
+                alert("Eroare la ștergere.");
+                console.error(err);
+            });
+    }
+</script>
 </body>
 </html>
