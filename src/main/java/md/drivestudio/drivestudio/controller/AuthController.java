@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,11 +39,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody UserRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtUtil.generateToken(authentication.getName());
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtUtil.generateToken(userDetails);
 
         return ResponseEntity.ok(token);
     }
