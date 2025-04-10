@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Entity
+@Table(name = "users") // nume sigur pentru SQL
 @Getter
 @Setter
 public class User implements UserDetails {
@@ -23,7 +24,7 @@ public class User implements UserDetails {
 
     private String password;
 
-    // --- UserDetails methods ---
+    // Metode din UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList(); // fără roluri deocamdată
