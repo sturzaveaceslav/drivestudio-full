@@ -1,86 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>DriveStudio - File Transfer</title>
+    <title>DriveStudio - FEX.net style</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            height: 100vh;
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
+            background: linear-gradient(135deg, #1d1d1d, #2c3e50);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 100px;
         }
 
         .container {
-            background: rgba(0, 0, 0, 0.35);
-            padding: 40px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            margin: auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
         }
 
         h1 {
             margin-bottom: 20px;
-            font-size: 32px;
-            color: #fff;
-        }
-
-        p {
-            margin-bottom: 30px;
-            font-size: 16px;
-            color: #dcdcdc;
         }
 
         input[type="file"] {
-            display: none;
+            display: block;
+            margin: 20px auto;
+            color: white;
         }
 
-        label.upload-btn {
-            background-color: #2980b9;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        label.upload-btn:hover {
+        button {
             background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 14px;
         }
 
         footer {
-            margin-top: 40px;
-            font-size: 14px;
-            color: #aaa;
+            margin-top: 50px;
+            font-size: 13px;
+            color: #ccc;
         }
     </style>
 </head>
 <body>
+
 <div class="container">
     <h1>DriveStudio</h1>
-    <p>Încarcă fișiere rapid și generează un link pentru descărcare</p>
+    <p>Încarcă un fișier și obține un link de descărcare</p>
 
-    <form action="/api/files/upload" method="post" enctype="multipart/form-data">
-        <label for="fileUpload" class="upload-btn">Selectează fișier</label>
-        <input id="fileUpload" type="file" name="file" onchange="this.form.submit()" />
-    </form>
+    <input type="file" id="fileInput">
+    <button onclick="upload()">Upload</button>
 
-    <footer>
-        Powered by Slavon
-    </footer>
+    <div id="message"></div>
 </div>
+
+<footer>Powered by Slavon</footer>
+
+<script>
+    async function upload() {
+        const file = document.getElementById('fileInput').files[0];
+        const message = document.getElementById('message');
+
+        if (!file) {
+            message.textContent = 'Selectează un fișier.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/files/upload', {
+                method: 'POST',
+                headers: {
+                    // Adaugă token-ul JWT dacă ești logat
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const link = await response.text();
+                message.innerHTML = `✔️ Fișier încărcat! <br> Link: <a href="${link}" target="_blank">${link}</a>`;
+            } else {
+                const error = await response.text();
+                message.textContent = `❌ Eroare: ${error}`;
+            }
+        } catch (e) {
+            message.textContent = '❌ Eroare de rețea.';
+        }
+    }
+</script>
+
 </body>
 </html>

@@ -1,8 +1,8 @@
 package md.drivestudio.drivestudio.config;
 
 import lombok.RequiredArgsConstructor;
+
 import md.drivestudio.drivestudio.security.JwtAuthFilter;
-import md.drivestudio.drivestudio.security.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
+
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -30,13 +32,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/index.html",
-                                "/css/**", "/js/**", "/images/**", "/static/**",
+                                "/", "/index.html", "/favicon.ico",
+                                "/css/**", "/js/**", "/img/**", "/static/**", "/webjars/**",
                                 "/upload.html", "/files.html", "/admin.html",
+                                "/register.html", "/login.html",
                                 "/api/auth/**", "/auth/**", "/h2-console/**"
                         ).permitAll()
-
-                        .requestMatchers("/auth/**", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions().disable()) // For H2 Console
