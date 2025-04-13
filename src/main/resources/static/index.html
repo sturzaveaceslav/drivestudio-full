@@ -2,107 +2,202 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>DriveStudio - FEX.net style</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveStudio.IT</title>
     <style>
         body {
-            background: linear-gradient(135deg, #1d1d1d, #2c3e50);
-            color: white;
+            margin: 0;
+            padding: 0;
+            background-color: #2f2f2f;
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 100px;
+            color: #fff;
         }
 
-        .container {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 10px;
-            width: 400px;
-            margin: auto;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        .overlay {
+            min-height: 100vh;
+            padding: 50px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         h1 {
-            margin-bottom: 20px;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
         }
 
         input[type="file"] {
-            display: block;
-            margin: 20px auto;
+            margin-bottom: 15px;
+            font-size: 16px;
             color: white;
         }
 
         button {
-            background-color: #3498db;
-            border: none;
-            color: white;
-            padding: 12px 20px;
+            padding: 10px 25px;
             font-size: 16px;
+            font-weight: bold;
+            background-color: #00c853;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 5px;
         }
 
-        #message {
-            margin-top: 20px;
+        button:hover {
+            background-color: #00e676;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .powered {
+            margin-top: 60px;
             font-size: 14px;
+            color: #ccc;
         }
 
-        footer {
-            margin-top: 50px;
-            font-size: 13px;
+        .link-box {
+            margin-top: 30px;
+        }
+
+        .link-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #progressContainer {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #uploadProgress {
+            width: 100%;
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        #progressText {
+            margin-top: 5px;
+            font-size: 14px;
             color: #ccc;
         }
     </style>
 </head>
 <body>
+<div class="overlay">
+    <h1>DriveStudio.IT</h1>
+    <p>Încarcă un fișier și obține un link unic de descărcare</p>
 
-<div class="container">
-    <h1>DriveStudio</h1>
-    <p>Încarcă un fișier și obține un link de descărcare</p>
+    <div class="upload-box">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" name="file" id="fileInput" required><br>
+            <button type="submit">Upload File</button>
 
-    <input type="file" id="fileInput">
-    <button onclick="upload()">Upload</button>
+            <div id="progressContainer">
+                <progress id="uploadProgress" value="0" max="100"></progress>
+                <div id="progressText">0%</div>
+            </div>
+        </form>
 
-    <div id="message"></div>
+        <div id="linkContainer" class="link-box" style="display: none;">
+            <p style="color: #00e676; font-size: 18px;">✅ Link generat:</p>
+            <input type="text" id="generatedLink" readonly>
+
+            <div class="link-actions">
+                <button onclick="copyLink()" style="background-color: #007bff;">📋 Copiază linkul</button>
+                <button onclick="openLink()" style="background-color: #00bcd4;">🔗 Deschide linkul</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="powered">Powered by Slavon</div>
 </div>
 
-<footer>Powered by Slavon</footer>
-
 <script>
-    async function upload() {
-        const file = document.getElementById('fileInput').files[0];
-        const message = document.getElementById('message');
+    function copyLink() {
+        const linkInput = document.getElementById("generatedLink");
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        alert("Link copiat!");
+    }
 
-        if (!file) {
-            message.textContent = 'Selectează un fișier.';
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const response = await fetch('/api/files/upload', {
-                method: 'POST',
-                headers: {
-                    // Adaugă token-ul JWT dacă ești logat
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
-                },
-                body: formData
-            });
-
-            if (response.ok) {
-                const link = await response.text();
-                message.innerHTML = `✔️ Fișier încărcat! <br> Link: <a href="${link}" target="_blank">${link}</a>`;
-            } else {
-                const error = await response.text();
-                message.textContent = `❌ Eroare: ${error}`;
-            }
-        } catch (e) {
-            message.textContent = '❌ Eroare de rețea.';
+    function openLink() {
+        const linkInput = document.getElementById("generatedLink").value;
+        if (linkInput) {
+            window.open(linkInput, "_blank");
         }
     }
-</script>
 
+    document.getElementById("uploadForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById("fileInput");
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload");
+
+        const progressContainer = document.getElementById("progressContainer");
+        const progressBar = document.getElementById("uploadProgress");
+        const progressText = document.getElementById("progressText");
+
+        progressContainer.style.display = "block";
+        progressBar.value = 0;
+        progressText.innerText = "0%";
+
+        xhr.upload.onprogress = function (event) {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                progressBar.value = percent;
+                progressText.innerText = percent + "%";
+            }
+        };
+
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                const id = xhr.responseText;
+                const finalLink = window.location.origin + "/download.html?id=" + encodeURIComponent(id);
+                document.getElementById("generatedLink").value = finalLink;
+                document.getElementById("linkContainer").style.display = "block";
+            } else {
+                document.getElementById("linkContainer").innerHTML = "❌ Eroare: " + xhr.statusText;
+                document.getElementById("linkContainer").style.display = "block";
+            }
+            progressContainer.style.display = "none";
+        };
+
+        xhr.onerror = function () {
+            alert("❌ Eroare la upload!");
+            progressContainer.style.display = "none";
+        };
+
+        xhr.send(formData);
+    });
+</script>
 </body>
 </html>

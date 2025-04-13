@@ -1,66 +1,104 @@
 package md.drivestudio.drivestudio.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import md.drivestudio.drivestudio.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/files")
 public class FileUploadController {
 
     @Value("${upload.directory}")
-    private String uploadBaseDir;
+    private String uploadDirectory;
 
-    private final JwtUtil jwtUtil;
-
-    public FileUploadController(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
-
+    // 🔼 Upload fișier — returnează doar ID-ul unic (ex: "a1b2c3")
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file,
-                                             HttpServletRequest request) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            // 1. Extrage tokenul JWT din header
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body("Missing or invalid Authorization header");
+            Path uploadPath = Paths.get(uploadDirectory);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
             }
 
-            String token = authHeader.substring(7);
-            String username = jwtUtil.extractUsername(token);
+            String uniqueId = UUID.randomUUID().toString().substring(0, 6);
+            String originalFilename = file.getOriginalFilename();
+            String storedFilename = uniqueId + "_" + originalFilename;
 
-            // 2. Creează directorul pentru utilizator
-            Path userUploadDir = Paths.get(uploadBaseDir, username);
-            if (!Files.exists(userUploadDir)) {
-                Files.createDirectories(userUploadDir);
-            }
-
-            // 3. Salvează fișierul în directorul utilizatorului
-            String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-            Path filePath = userUploadDir.resolve(fileName);
+            Path filePath = uploadPath.resolve(storedFilename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // 4. Construiește linkul de descărcare
-            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/uploads/")
-                    .path(username + "/")
-                    .path(fileName)
-                    .toUriString();
-
-            return ResponseEntity.ok("File uploaded successfully: " + fileUrl);
+            // 🔁 Returnăm doar ID-ul pentru a genera frontend link-ul: /download.html?id=ID
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(uniqueId);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Eroare la încărcare: " + e.getMessage());
+        }
+    }
+
+    // 🔽 Descărcare publică pe bază de ID — /s/{id}
+    @GetMapping("/s/{id}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable("id") String id) {
+        try {
+            Path folder = Paths.get(uploadDirectory);
+            Optional<Path> file = Files.list(folder)
+                    .filter(f -> f.getFileName().toString().startsWith(id + "_"))
+                    .findFirst();
+
+            if (file.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            Path filePath = file.get();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            String storedFilename = filePath.getFileName().toString();
+            String originalFilename = storedFilename.substring(id.length() + 1);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + originalFilename + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    // 🔍 HEAD request pentru preview (verificăm tipul fișierului)
+    @RequestMapping(value = "/s/{id}", method = RequestMethod.HEAD)
+    public ResponseEntity<Void> checkFileType(@PathVariable("id") String id) {
+        try {
+            Path folder = Paths.get(uploadDirectory);
+            Optional<Path> file = Files.list(folder)
+                    .filter(f -> f.getFileName().toString().startsWith(id + "_"))
+                    .findFirst();
+
+            if (file.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path filePath = file.get();
+            String mimeType = Files.probeContentType(filePath);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(mimeType != null ? mimeType : "application/octet-stream"))
+                    .build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

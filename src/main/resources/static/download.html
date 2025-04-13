@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Descărcare fișier</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #2f2f2f;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        video, img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        a.download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #00c853;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        a.download-btn:hover {
+            background-color: #00e676;
+        }
+
+        .powered {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>Fișier gata de descărcare</h2>
+    <div id="content">
+        <p>Verificăm fișierul...</p>
+    </div>
+</div>
+
+<div class="powered">Powered by Slavon</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const contentDiv = document.getElementById("content");
+
+    if (!id) {
+        contentDiv.innerHTML = "<p style='color:red;'>❌ Link invalid sau lipsă!</p>";
+    } else {
+        const headReq = new XMLHttpRequest();
+        headReq.open("HEAD", `/s/${id}`);
+        headReq.onreadystatechange = function () {
+            if (headReq.readyState === 4) {
+                if (headReq.status === 200) {
+                    const type = headReq.getResponseHeader("Content-Type");
+                    if (type.startsWith("video/")) {
+                        contentDiv.innerHTML = `
+                            <video controls>
+                                <source src="/s/${id}" type="${type}">
+                                Browserul tău nu suportă redarea video.
+                            </video>
+                            <a href="/s/${id}" class="download-btn" download>📥 Descarcă fișierul</a>
+                        `;
+                    } else if (type.startsWith("image/")) {
+                        contentDiv.innerHTML = `
+                            <img src="/s/${id}" alt="Imagine">
+                            <a href="/s/${id}" class="download-btn" download>📥 Descarcă imaginea</a>
+                        `;
+                    } else {
+                        contentDiv.innerHTML = `
+                            <p>Fișierul nu poate fi previzualizat, dar îl poți descărca:</p>
+                            <a href="/s/${id}" class="download-btn" download>📥 Descarcă fișierul</a>
+                        `;
+                    }
+                } else {
+                    contentDiv.innerHTML = "<p style='color:red;'>❌ Link invalid sau expirat!</p>";
+                }
+            }
+        };
+        headReq.send();
+    }
+</script>
+</body>
+</html>

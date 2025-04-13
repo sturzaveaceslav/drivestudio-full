@@ -95,17 +95,19 @@
 
     <build>
         <plugins>
-            <!-- Java Compiler -->
+            <!-- Java Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <parameters>true</parameters> <!-- 🔥 Necesită pentru Spring -->
                 </configuration>
             </plugin>
 
-            <!-- Spring Boot Plugin - pentru fat JAR -->
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

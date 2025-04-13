@@ -1,32 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
     <title>Login - DriveStudio</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div class="container">
     <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
-    <h1>Fișierele Mele</h1>
-    ...
-    <footer>
-        <p>Powered by Slavon</p>
-    </footer>
+    <h1>Autentificare</h1>
+
+    <form id="login-form">
+        <input type="text" id="login-username" placeholder="Username" required><br><br>
+        <input type="password" id="login-password" placeholder="Parolă" required><br><br>
+        <button type="submit">Login</button>
+    </form>
+
+    <p>Nu ai cont? <a href="register.html">Înregistrează-te aici</a></p>
 </div>
 
-<h2>Login</h2>
-<form id="login-form">
-    <label for="login-username">Username:</label>
-    <input type="text" id="login-username" required><br><br>
+<footer>Powered by Slavon</footer>
 
-    <label for="login-password">Password:</label>
-    <input type="password" id="login-password" required><br><br>
-
-    <button type="submit">Login</button>
-</form>
-
-<p>Nu ai cont? <a href="register.html">Înregistrează-te aici</a></p>
-
-<script src="js/app.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>
