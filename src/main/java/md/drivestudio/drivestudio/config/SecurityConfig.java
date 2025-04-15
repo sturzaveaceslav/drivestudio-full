@@ -29,43 +29,29 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-
                         .requestMatchers(
                                 "/", "/favicon.ico",
                                 "/css/**", "/js/**", "/img/**", "/video/**",
                                 "/index.html", "/login.html", "/register.html", "/upload.html",
                                 "/files.html", "/admin.html", "/download.html",
-                                "/download", "/s/**", "/api/auth/**", "/api/files/info/**", "/upload",
+                                "/s/**", "/upload", "/download",
+                                "/preview.html", "/gallery/**", "/gallery/*/download-zip",
+                                "/api/auth/**", "/api/files/info/**",
                                 "/h2-console/**"
                         ).permitAll()
-
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-
-                .formLogin(form -> form
-                        .loginPage("/login.html")
-                        .loginProcessingUrl("/api/auth/login")
-                        .defaultSuccessUrl("/index.html", true)
-                        .permitAll()
-                )
-
                 .exceptionHandling(exc -> exc
                         .authenticationEntryPoint((request, response, authException) -> {
-                            if (request.getHeader("Accept") != null &&
-                                    request.getHeader("Accept").contains("application/json")) {
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                response.setContentType("application/json");
-                                response.getWriter().write("{\"error\":\"Unauthorized\"}");
-                            } else {
-                                response.sendRedirect("/login.html");
-                            }
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
                         })
                 )
-
-                .headers(headers -> headers.frameOptions().disable())
+                .headers(headers -> headers.frameOptions().disable()) // pentru h2-console
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

@@ -2,29 +2,126 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - DriveStudio</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Admin Panel - DriveStudio</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 10px;
+        }
+        th {
+            background-color: #222;
+        }
+        tr:nth-child(even) {
+            background-color: #1e1e1e;
+        }
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .btn-view { background-color: #00bcd4; color: white; }
+        .btn-delete { background-color: #f44336; color: white; }
+        .btn-download { background-color: #4caf50; color: white; }
+        .btn:hover { opacity: 0.85; }
+        h1 { margin-bottom: 10px; }
+        footer { margin-top: 40px; color: #777; }
+    </style>
 </head>
 <body>
-<div class="container">
-    <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
-    <h1>Administrare Utilizatori</h1>
 
-    <table>
-        <thead>
-        <tr>
-            <th>Utilizator</th>
-            <th>Fișiere</th>
-        </tr>
-        </thead>
-        <tbody id="user-rows">
-        <!-- completat din JavaScript -->
-        </tbody>
-    </table>
-</div>
+<h1>🔒 Admin Panel - Galerii încărcate</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Galerie ID</th>
+        <th>Data încărcării</th>
+        <th>Utilizator</th>
+        <th>Tip</th>
+        <th>Nr. fișiere</th>
+        <th>Acțiuni</th>
+    </tr>
+    </thead>
+    <tbody id="gallery-rows">
+    <!-- Galeriile se încarcă aici -->
+    </tbody>
+</table>
 
-<footer>Powered by Slavon</footer>
+<footer>
+    <p>Powered by Slavon ❤️</p>
+</footer>
 
-<script src="/app.js"></script>
+<script>
+    const token = localStorage.getItem("token");
+
+    fetch("/api/admin/galleries", {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    })
+        .then(res => res.json())
+        .then(galleries => {
+            const table = document.getElementById("gallery-rows");
+            galleries.forEach(g => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                <td>${g.galleryId}</td>
+                <td>${new Date(g.uploadDate).toLocaleString()}</td>
+                <td>${g.uploader}</td>
+                <td>${g.uploader === "anonim" ? "anonim" : (g.uploader === "slavon" || g.uploader === "vlad" ? "admin" : "user")}</td>
+                <td>${g.fileCount}</td>
+                <td>
+                    <button class="btn btn-view" onclick="view('${g.galleryId}')">Deschide</button>
+                    <button class="btn btn-download" onclick="download('${g.galleryId}')">ZIP</button>
+                    <button class="btn btn-delete" onclick="deleteGallery('${g.galleryId}', this)">Șterge</button>
+                </td>
+            `;
+                table.appendChild(tr);
+            });
+        })
+        .catch(err => {
+            alert("Eroare la încărcarea galeriilor: " + err.message);
+        });
+
+    function view(id) {
+        window.open(`/preview.html?id=${id}`, "_blank");
+    }
+
+    function download(id) {
+        window.open(`/api/admin/galleries/${id}/download-zip`, "_blank");
+    }
+
+    function deleteGallery(id, btn) {
+        if (!confirm("Ești sigur că vrei să ștergi această galerie?")) return;
+
+        fetch(`/api/admin/galleries/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+            .then(res => {
+                if (res.ok) {
+                    btn.closest("tr").remove();
+                } else {
+                    alert("Eroare la ștergere");
+                }
+            });
+    }
+</script>
+
 </body>
 </html>

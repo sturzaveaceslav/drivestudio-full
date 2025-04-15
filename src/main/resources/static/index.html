@@ -2,202 +2,218 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>DriveStudio.IT</title>
+    <title>DriveStudio - Upload WOW</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
-            background-color: #2f2f2f;
             font-family: Arial, sans-serif;
+            background: url("/img/despre.gif") no-repeat center center fixed;
+            background-size: cover;
             color: #fff;
         }
 
-        .overlay {
-            min-height: 100vh;
-            padding: 50px 20px;
+        .top-bar {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            padding: 15px 30px;
+            background-color: rgba(0, 0, 0, 0.6);
         }
 
-        h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
+        .top-bar img {
+            height: 40px;
         }
 
-        p {
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
-
-        .upload-box {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            text-align: center;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        input[type="file"] {
-            margin-bottom: 15px;
-            font-size: 16px;
+        .auth-buttons button {
+            margin-left: 10px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #1a73e8;
             color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        input[type="text"], input[type="file"] {
+            padding: 10px;
+            margin-top: 10px;
+            width: 300px;
+            border: none;
+            border-radius: 6px;
         }
 
         button {
-            padding: 10px 25px;
-            font-size: 16px;
+            padding: 10px 20px;
+            margin-top: 15px;
             font-weight: bold;
             background-color: #00c853;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            margin-top: 5px;
+            color: white;
         }
 
-        button:hover {
-            background-color: #00e676;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            font-size: 16px;
-            width: 100%;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: none;
-        }
-
-        .powered {
-            margin-top: 60px;
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        .link-box {
-            margin-top: 30px;
-        }
-
-        .link-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        #progressContainer {
-            margin-top: 20px;
-            display: none;
-        }
-
-        #uploadProgress {
-            width: 100%;
+        .progress-bar {
+            width: 300px;
             height: 20px;
+            background-color: #444;
             border-radius: 10px;
+            margin: 15px auto;
+            overflow: hidden;
         }
 
-        #progressText {
-            margin-top: 5px;
-            font-size: 14px;
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #00e676;
+            text-align: center;
+            color: #000;
+            line-height: 20px;
+            font-weight: bold;
+        }
+
+        .link-buttons button {
+            margin: 5px;
+            background-color: #1a73e8;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
             color: #ccc;
         }
     </style>
 </head>
 <body>
-<div class="overlay">
-    <h1>DriveStudio.IT</h1>
-    <p>Încarcă un fișier și obține un link unic de descărcare</p>
 
-    <div class="upload-box">
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" name="file" id="fileInput" required><br>
-            <button type="submit">Upload File</button>
-
-            <div id="progressContainer">
-                <progress id="uploadProgress" value="0" max="100"></progress>
-                <div id="progressText">0%</div>
-            </div>
-        </form>
-
-        <div id="linkContainer" class="link-box" style="display: none;">
-            <p style="color: #00e676; font-size: 18px;">✅ Link generat:</p>
-            <input type="text" id="generatedLink" readonly>
-
-            <div class="link-actions">
-                <button onclick="copyLink()" style="background-color: #007bff;">📋 Copiază linkul</button>
-                <button onclick="openLink()" style="background-color: #00bcd4;">🔗 Deschide linkul</button>
-            </div>
-        </div>
+<div class="top-bar">
+    <img src="/img/logo.png" alt="DriveStudio Logo">
+    <div class="auth-buttons">
+        <button onclick="window.location.href='/login.html'">Login</button>
+        <button onclick="window.location.href='/register.html'">Register</button>
     </div>
-
-    <div class="powered">Powered by Slavon</div>
 </div>
 
+<div class="container">
+    <h1>Încarcă fișierele tale</h1>
+    <input type="text" id="customFilename" placeholder="Denumire fișier dorită (opțional)">
+    <br>
+    <input type="file" id="fileInput" multiple>
+    <br>
+    <button onclick="uploadFiles()">Upload</button>
+
+    <div class="progress-bar">
+        <div class="progress-bar-fill" id="progressBarFill">0%</div>
+    </div>
+
+    <div id="uploadResult"></div>
+    <div class="link-buttons" id="linkButtons" style="display: none;">
+        <button onclick="copyLink()">📋 Copiază link</button>
+        <button onclick="openLink()">🔗 Deschide link</button>
+    </div>
+    <div class="error" id="errorMsg"></div>
+</div>
+
+<footer>
+    <p>Powered by Slavon</p>
+</footer>
+
 <script>
-    function copyLink() {
-        const linkInput = document.getElementById("generatedLink");
-        linkInput.select();
-        linkInput.setSelectionRange(0, 99999);
-        document.execCommand("copy");
-        alert("Link copiat!");
-    }
-
-    function openLink() {
-        const linkInput = document.getElementById("generatedLink").value;
-        if (linkInput) {
-            window.open(linkInput, "_blank");
-        }
-    }
-
-    document.getElementById("uploadForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-
+    function uploadFiles() {
         const fileInput = document.getElementById("fileInput");
+        const customName = document.getElementById("customFilename").value.trim();
+        const errorMsg = document.getElementById("errorMsg");
+        const uploadResult = document.getElementById("uploadResult");
+        const files = fileInput.files;
+        const token = localStorage.getItem("token");
+
+        const maxSizeAnonim = 500 * 1024 * 1024;
+        const maxSizeUser = 2 * 1024 * 1024 * 1024;
+
+        if (!files.length) {
+            errorMsg.textContent = "❌ Te rugăm să selectezi cel puțin un fișier.";
+            return;
+        }
+
+        // 🔍 Verificare dimensiune totală
+        let totalSize = 0;
+        for (let f of files) totalSize += f.size;
+
+        if (!token && totalSize > maxSizeAnonim) {
+            errorMsg.textContent = "❌ Fișierele anonime pot avea maxim 500MB. Autentifică-te pentru a încărca până la 2GB.";
+            return;
+        }
+
+        if (token && totalSize > maxSizeUser) {
+            errorMsg.textContent = "❌ Ai depășit limita de 2GB. Contactează adminul pentru extindere.";
+            return;
+        }
+
+        errorMsg.textContent = "";
+        uploadResult.innerHTML = "";
+
         const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
+        for (let file of files) {
+            formData.append("file", file);
+        }
+
+        if (customName) {
+            formData.append("customName", customName);
+        }
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/upload");
 
-        const progressContainer = document.getElementById("progressContainer");
-        const progressBar = document.getElementById("uploadProgress");
-        const progressText = document.getElementById("progressText");
-
-        progressContainer.style.display = "block";
-        progressBar.value = 0;
-        progressText.innerText = "0%";
-
         xhr.upload.onprogress = function (event) {
-            if (event.lengthComputable) {
-                const percent = Math.round((event.loaded / event.total) * 100);
-                progressBar.value = percent;
-                progressText.innerText = percent + "%";
-            }
+            const percent = Math.round((event.loaded / event.total) * 100);
+            const bar = document.getElementById("progressBarFill");
+            bar.style.width = percent + "%";
+            bar.textContent = percent + "%";
         };
 
         xhr.onload = function () {
             if (xhr.status === 200) {
-                const id = xhr.responseText;
-                const finalLink = window.location.origin + "/download.html?id=" + encodeURIComponent(id);
-                document.getElementById("generatedLink").value = finalLink;
-                document.getElementById("linkContainer").style.display = "block";
+                const id = xhr.responseText.replace(/[\[\]"]+/g, "");
+                const link = `${window.location.origin}/preview.html?id=${encodeURIComponent(id)}`;
+                uploadResult.innerHTML = `
+                    <p style="color: lightgreen;">✅ Link generat:<br><a href="${link}" target="_blank">${link}</a></p>
+                    ${!token ? "<p style='color: #ffeb3b;'>⏳ Fișierele anonime vor fi șterse automat în 3 zile!</p>" : ""}
+                `;
+                document.getElementById("linkButtons").style.display = "block";
+                document.getElementById("linkButtons").setAttribute("data-link", link);
             } else {
-                document.getElementById("linkContainer").innerHTML = "❌ Eroare: " + xhr.statusText;
-                document.getElementById("linkContainer").style.display = "block";
+                errorMsg.textContent = "❌ Eroare la încărcare: " + xhr.responseText;
             }
-            progressContainer.style.display = "none";
         };
 
         xhr.onerror = function () {
-            alert("❌ Eroare la upload!");
-            progressContainer.style.display = "none";
+            errorMsg.textContent = "❌ Fișierele anonime pot avea maxim 500MB. Autentifică-te pentru a încărca până la 2GB";
         };
 
         xhr.send(formData);
-    });
+    }
+
+    function copyLink() {
+        const link = document.getElementById("linkButtons").getAttribute("data-link");
+        navigator.clipboard.writeText(link).then(() => alert("Link copiat!"));
+    }
+
+    function openLink() {
+        const link = document.getElementById("linkButtons").getAttribute("data-link");
+        window.open(link, "_blank");
+    }
 </script>
+
 </body>
 </html>

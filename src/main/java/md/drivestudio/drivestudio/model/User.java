@@ -1,8 +1,7 @@
 package md.drivestudio.drivestudio.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,24 +9,38 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Entity
-@Table(name = "users") // nume sigur pentru SQL
+@Table(name = "users")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
     private String password;
 
-    // Metode din UserDetails
+    private String firstName;
+    private String lastName;
+    private String phone;
+    private String country;
+    private String email;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+
+    private Long maxUploadSize; // în bytes – 500MB, 2GB etc.
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // fără roluri deocamdată
+        return Collections.emptyList(); // pentru viitor: adaugă authorities dacă vrei
     }
 
     @Override

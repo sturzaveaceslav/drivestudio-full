@@ -1,9 +1,13 @@
 package md.drivestudio.drivestudio.controller;
 
-import md.drivestudio.drivestudio.model.User;
-import md.drivestudio.drivestudio.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import md.drivestudio.drivestudio.dto.AdminGalleryDTO;
+import md.drivestudio.drivestudio.entity.UploadedFile;
+import md.drivestudio.drivestudio.repository.UploadedFileRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -13,58 +17,78 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminController {
 
+    private final UploadedFileRepository fileRepository;
+
     @Value("${upload.directory}")
-    private String uploadBaseDir;
+    private String uploadDirectory;
 
-    private final UserRepository userRepository;
-
-    public AdminController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<String>> getAllUsernames() {
-        List<String> usernames = userRepository.findAll()
-                .stream()
-                .map(User::getUsername)
+    @GetMapping("/galleries")
+    public List<AdminGalleryDTO> getAllGalleries() {
+        return fileRepository.findAll().stream()
+                .collect(Collectors.groupingBy(UploadedFile::getGalleryId))
+                .entrySet().stream()
+                .map(entry -> {
+                    List<UploadedFile> files = entry.getValue();
+                    UploadedFile first = files.get(0);
+                    String uploader = (first.getUser() != null)
+                            ? first.getUser().getUsername()
+                            : "anonim";
+                    return new AdminGalleryDTO(
+                            entry.getKey(),
+                            first.getUploadDate(),
+                            uploader,
+                            files.size()
+                    );
+                })
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(usernames);
     }
 
-    @GetMapping("/files/{username}")
-    public ResponseEntity<List<String>> getUserFiles(@PathVariable String username) {
-        Path userDir = Paths.get(uploadBaseDir, username);
-        List<String> files = new ArrayList<>();
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(userDir)) {
-            for (Path path : stream) {
-                if (Files.isRegularFile(path)) {
-                    files.add(path.getFileName().toString());
-                }
-            }
-        } catch (Exception e) {
-            return ResponseEntity.ok(Collections.emptyList());
+    @DeleteMapping("/galleries/{galleryId}")
+    public ResponseEntity<String> deleteGallery(@PathVariable String galleryId) {
+        List<UploadedFile> files = fileRepository.findByGalleryId(galleryId);
+        if (files.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(files);
+        files.forEach(file -> {
+            try {
+                Files.deleteIfExists(Paths.get(file.getPath()));
+            } catch (IOException ignored) {}
+        });
+
+        fileRepository.deleteAll(files);
+        return ResponseEntity.ok("Galerie ștearsă: " + galleryId);
     }
 
-    @DeleteMapping("/files/{username}/{fileName}")
-    public ResponseEntity<String> deleteUserFile(@PathVariable String username,
-                                                 @PathVariable String fileName) {
-        Path filePath = Paths.get(uploadBaseDir, username, fileName);
+    @GetMapping("/galleries/{galleryId}/download-zip")
+    public ResponseEntity<Resource> downloadZip(@PathVariable String galleryId) {
         try {
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                return ResponseEntity.ok("Fișierul a fost șters.");
-            } else {
-                return ResponseEntity.status(404).body("Fișierul nu există.");
+            List<UploadedFile> files = fileRepository.findByGalleryId(galleryId);
+            if (files.isEmpty()) return ResponseEntity.notFound().build();
+
+            Path zipPath = Files.createTempFile("gallery_" + galleryId + "_", ".zip");
+
+            try (FileSystem zipFs = FileSystems.newFileSystem(zipPath, (ClassLoader) null)) {
+                for (UploadedFile file : files) {
+                    Path filePath = Paths.get(file.getPath());
+                    if (Files.exists(filePath)) {
+                        Path pathInZip = zipFs.getPath("/" + file.getFilename());
+                        Files.copy(filePath, pathInZip, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Eroare la ștergere: " + e.getMessage());
+
+            Resource resource = new UrlResource(zipPath.toUri());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + galleryId + ".zip\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

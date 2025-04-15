@@ -2,25 +2,149 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Login - DriveStudio</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Autentificare - DriveStudio</title>
+    <style>
+        body {
+            background: #f4f4f4;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #222;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        footer {
+            margin-top: 40px;
+            color: #777;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .logo {
+            max-height: 60px;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-    <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
-    <h1>Autentificare</h1>
 
-    <form id="login-form">
-        <input type="text" id="login-username" placeholder="Username" required><br><br>
-        <input type="password" id="login-password" placeholder="Parolă" required><br><br>
-        <button type="submit">Login</button>
-    </form>
-
-    <p>Nu ai cont? <a href="register.html">Înregistrează-te aici</a></p>
+<div class="top-bar">
+    <img src="/img/logo.png" alt="Logo" class="logo">
 </div>
 
-<footer>Powered by Slavon</footer>
+<div class="container">
+    <h1>Autentificare</h1>
 
-<script src="/app.js"></script>
+    <input type="text" id="loginUsername" placeholder="Username">
+    <input type="password" id="loginPassword" placeholder="Parolă">
+
+    <button onclick="performLogin()">Login</button>
+    <div id="loginResult" class="message"></div>
+</div>
+
+<footer>
+    <p>Powered by Slavon ❤️</p>
+</footer>
+
+<script>
+    function performLogin() {
+        const username = document.getElementById("loginUsername").value;
+        const password = document.getElementById("loginPassword").value;
+        const resultDiv = document.getElementById("loginResult");
+        resultDiv.innerText = "";
+        resultDiv.style.color = "red";
+
+        if (!username || !password) {
+            resultDiv.innerText = "❗ Completează toate câmpurile!";
+            return;
+        }
+
+        fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text || "Autentificare eșuată"); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("role", data.role);
+                localStorage.setItem("username", username);
+
+                resultDiv.style.color = "green";
+                resultDiv.innerText = "✅ Autentificare reușită! Redirecționare...";
+
+                setTimeout(() => {
+                    if (data.role === "ADMIN") {
+                        window.location.href = "/admin.html";
+                    } else {
+                        window.location.href = "/index.html";
+                    }
+                }, 2000);
+            })
+            .catch(error => {
+                if (error.message.startsWith("<")) {
+                    resultDiv.innerText = "❌ Serverul a răspuns cu HTML, nu JSON. Verifică ruta!";
+                } else {
+                    resultDiv.innerText = "❌ Eroare: " + error.message;
+                }
+            });
+    }
+</script>
+
 </body>
 </html>
