@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - DriveStudio</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url("/img/despre.gif") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      padding: 30px;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: -1;
+    }
+    h1 {
+      text-align: center;
+      margin: 40px 0 20px;
+      font-size: 32px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 50px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #555;
+      text-align: center;
+    }
+    th { background-color: #222; }
+    tr:nth-child(even) { background-color: #1e1e1e; }
+    .btn {
+      padding: 6px 12px;
+      margin: 2px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .btn-view { background-color: #00bcd4; color: white; }
+    .btn-download { background-color: #4caf50; color: white; }
+    .btn-delete { background-color: #f44336; color: white; }
+    .btn-upload { background-color: #2196f3; color: white; }
+    .btn:hover { opacity: 0.85; }
+    footer { margin-top: 60px; text-align: center; color: #aaa; }
+    .logo { position: absolute; top: 20px; left: 20px; }
+    .logo img { height: 50px; }
+    #upload-form { margin-bottom: 40px; }
+    #progress-bar {
+      width: 100%;
+      background: #444;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    #progress-fill {
+      height: 20px;
+      width: 0%;
+      background-color: limegreen;
+      transition: width 0.4s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+<div class="logo">
+  <a href="/index.html">
+    <img src="/img/logo.png" alt="DriveStudio Logo">
+  </a>
+</div>
+
+<h1>🔐 Admin Panel - Galerii încărcate</h1>
+
+<!-- 🔼 Form Upload -->
+<form id="upload-form">
+  <label for="customName">Nume galerie:</label>
+  <input type="text" id="customName" required>
+  <label for="userSelect">Încarcă pentru:</label>
+  <select id="userSelect">
+    <option value="">(adminul curent)</option>
+  </select>
+  <input type="file" id="fileInput" multiple required>
+  <button class="btn btn-upload" type="submit">Încarcă</button>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+</form>
+
+<h2>👑 Încărcate de Admini</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Galerie ID</th>
+    <th>Data încărcării</th>
+    <th>Utilizator</th>
+    <th>Tip</th>
+    <th>Nr. fișiere</th>
+    <th>Denumire galerie</th>
+    <th>Acțiuni</th>
+  </tr>
+  </thead>
+  <tbody id="gallery-rows-admin"></tbody>
+</table>
+
+<h2>👤 Încărcate de Useri logați</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Galerie ID</th>
+    <th>Data încărcării</th>
+    <th>Utilizator</th>
+    <th>Tip</th>
+    <th>Nr. fișiere</th>
+    <th>Denumire galerie</th>
+    <th>Acțiuni</th>
+  </tr>
+  </thead>
+  <tbody id="gallery-rows-user"></tbody>
+</table>
+
+<h2>👻 Încărcate anonim</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Galerie ID</th>
+    <th>Data încărcării</th>
+    <th>Utilizator</th>
+    <th>Tip</th>
+    <th>Nr. fișiere</th>
+    <th>Denumire galerie</th>
+    <th>Acțiuni</th>
+  </tr>
+  </thead>
+  <tbody id="gallery-rows-anonim"></tbody>
+</table>
+
+<h1>👥 Utilizatori Înregistrați</h1>
+<table>
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Username</th>
+    <th>Rol</th>
+    <th>Limită Upload</th>
+    <th>Acțiuni</th>
+  </tr>
+  </thead>
+  <tbody id="user-rows"></tbody>
+</table>
+
+<footer>
+  <p>Powered by Slavon ❤️</p>
+</footer>
+
+<script>
+  fetch("/api/admin/check-session", { credentials: "include" })
+          .then(res => {
+            if (!res.ok) throw new Error("Nu ești logat sau nu ai drepturi admin");
+          })
+          .then(() => {
+            loadGalleries();
+            loadUsers();
+          })
+          .catch(err => {
+            alert("❌ " + err.message);
+            window.location.href = "/login.html";
+          });
+
+  function loadGalleries() {
+    fetch("/api/admin/galleries", { credentials: "include" })
+            .then(res => res.json())
+            .then(galleries => {
+              galleries.forEach(g => {
+                const tr = document.createElement("tr");
+                const tip = g.uploader === 'anonim' ? 'anonim' : (['slavon', 'vlad'].includes(g.uploader) ? 'admin' : 'user');
+
+                tr.innerHTML = `
+                        <td>${g.galleryId}</td>
+                        <td>${new Date(g.uploadDate).toLocaleString()}</td>
+                        <td>${g.uploader}</td>
+                        <td>${tip}</td>
+                        <td>${g.fileCount}</td>
+                        <td>${g.folderName || '-'}</td>
+                        <td>
+                            <button class="btn btn-view" onclick="viewGallery('${g.galleryId}')">Deschide</button>
+                            <button class="btn btn-download" onclick="downloadZip('${g.galleryId}')">ZIP</button>
+                            <button class="btn btn-delete" onclick="deleteGallery('${g.galleryId}', this)">Șterge</button>
+                        </td>
+                    `;
+
+                const tbodyId = tip === 'admin' ? "gallery-rows-admin" : tip === 'user' ? "gallery-rows-user" : "gallery-rows-anonim";
+                document.getElementById(tbodyId).appendChild(tr);
+              });
+            });
+  }
+
+  function loadUsers() {
+    fetch("/api/admin/users", { credentials: "include" })
+            .then(res => res.json())
+            .then(users => {
+              const tbody = document.getElementById("user-rows");
+              const select = document.getElementById("userSelect");
+              users.forEach(u => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                        <td>${u.id}</td>
+                        <td>${u.username}</td>
+                        <td>${u.role}</td>
+                        <td><input type="number" value="${u.maxUploadSize}" min="0" style="width: 120px"> MB</td>
+                        <td>
+                            <button class="btn btn-delete" onclick="deleteUser(${u.id}, this)">Șterge</button>
+                            <button class="btn btn-download" onclick="updateLimit(${u.id}, this)">Actualizează</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+
+                const opt = document.createElement("option");
+                opt.value = u.id;
+                opt.text = `${u.username} (${u.role})`;
+                select.appendChild(opt);
+              });
+            });
+  }
+
+  document.getElementById("upload-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const files = document.getElementById("fileInput").files;
+    const customName = document.getElementById("customName").value;
+    const targetUserId = document.getElementById("userSelect").value;
+
+    const formData = new FormData();
+    formData.append("customName", customName);
+    if (targetUserId) formData.append("targetUserId", targetUserId);
+    for (let file of files) formData.append("files", file);
+
+    const progressFill = document.getElementById("progress-fill");
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+      credentials: "include"
+    }).then(res => {
+      if (!res.ok) throw new Error("Eroare la upload");
+      return res.text();
+    }).then(msg => {
+      alert("✅ Galerie încărcată");
+      progressFill.style.width = "0%";
+      location.reload();
+    }).catch(err => {
+      alert("❌ " + err.message);
+      progressFill.style.width = "0%";
+    });
+  });
+
+  function viewGallery(id) { window.open(`/preview.html?id=${id}`, "_blank"); }
+  function downloadZip(id) { window.open(`/api/admin/galleries/${id}/download-zip`, "_blank"); }
+  function deleteGallery(id, btn) {
+    if (!confirm("Ești sigur că vrei să ștergi această galerie?")) return;
+    fetch(`/api/admin/galleries/${id}`, { method: "DELETE", credentials: "include" })
+            .then(res => { if (res.ok) btn.closest("tr").remove(); else alert("❌ Eroare la ștergere galerie"); });
+  }
+  function deleteUser(id, btn) {
+    if (!confirm("Ștergi acest utilizator?")) return;
+    fetch(`/api/admin/users/${id}`, { method: "DELETE", credentials: "include" })
+            .then(res => { if (res.ok) btn.closest("tr").remove(); else alert("❌ Eroare la ștergere utilizator"); });
+  }
+  function updateLimit(id, btn) {
+    const input = btn.parentElement.previousElementSibling.querySelector("input");
+    const value = parseInt(input.value);
+    if (isNaN(value) || value < 0) return alert("❌ Limită invalidă!");
+    fetch(`/api/admin/users/${id}`, {
+      method: "PUT",
+      headers: { 'Content-Type': 'application/json' },
+      credentials: "include",
+      body: JSON.stringify({ maxUploadSize: value })
+    })
+            .then(res => res.text())
+            .then(msg => alert("✅ " + msg))
+            .catch(err => alert("❌ " + err.message));
+  }
+</script>
+</body>
+</html>

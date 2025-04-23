@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: drivestudio-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: drivestudiodownload
+      MYSQL_USER: drivestudio_user
+      MYSQL_PASSWORD: Slavic1990!
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  drivestudio:
+    image: drivestudio:latest
+    container_name: drivestudio-app
+    depends_on:
+      - mariadb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/drivestudiodownload
+      - SPRING_DATASOURCE_USERNAME=drivestudio_user
+      - SPRING_DATASOURCE_PASSWORD=Slavic1990!
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.mariadb.jdbc.Driver
+      - JWT_SECRET=FEX_SECRET_KEY
+      - JWT_EXPIRATION=3600000
+      - UPLOAD_DIRECTORY=/app/uploads
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  db_data:

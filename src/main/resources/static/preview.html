@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria ta - DriveStudio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery-bundle.min.css">
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .gallery-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .item {
+            width: 250px;
+            background: #1f1f1f;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .item:hover {
+            transform: scale(1.02);
+        }
+
+        .item img,
+        .item video,
+        .item iframe {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            max-height: 180px;
+            object-fit: cover;
+        }
+
+        .item p {
+            font-size: 14px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #00c853;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-top: 5px;
+        }
+
+        .btn:hover {
+            background-color: #00a040;
+        }
+
+        #error {
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        footer {
+            margin-top: 60px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📁 Galeria ta - DriveStudio</h1>
+<div id="gallery" class="gallery-grid"></div>
+<p id="error"></p>
+
+<footer>Powered by Slavon ❤️</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.umd.min.js"></script>
+
+<script>
+    const galleryId = new URLSearchParams(window.location.search).get("id");
+    const galleryEl = document.getElementById("gallery");
+    const errorEl = document.getElementById("error");
+
+    if (!galleryId) {
+        errorEl.textContent = "❌ ID-ul galeriei lipsește!";
+    } else {
+        fetch(`/api/gallery/${galleryId}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Cod HTTP: ${res.status}`);
+                return res.json();
+            })
+            .then(files => {
+                if (!Array.isArray(files)) throw new Error("Răspuns invalid (nu este listă JSON)");
+
+                if (files.length === 0) {
+                    errorEl.textContent = "❌ Galeria este goală.";
+                    return;
+                }
+
+                const dynamicEl = [];
+
+                files.forEach(file => {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "item";
+                    const url = `/s/${file.uniqueId}`;
+                    const filename = file.filename || "fără nume";
+
+                    let content = "";
+                    if (file.fileType?.startsWith("image/")) {
+                        content = `<img src="${url}" alt="${filename}">`;
+                        dynamicEl.push({
+                            src: url,
+                            thumb: url,
+                            subHtml: `<h4>${filename}</h4>`
+                        });
+                    } else if (file.fileType?.startsWith("video/")) {
+                        content = `
+                            <video controls>
+                                <source src="${url}" type="${file.fileType}">
+                            </video>`;
+                    } else if (file.fileType === "application/pdf") {
+                        content = `<iframe src="${url}" height="200"></iframe>`;
+                    } else {
+                        content = `<p>📄 ${filename} (nu poate fi previzualizat)</p>`;
+                    }
+
+                    wrapper.innerHTML = `
+                        ${content}
+                        <p>${filename}</p>
+                        <a href="${url}" download class="btn">⬇️ Descarcă</a>
+                    `;
+                    galleryEl.appendChild(wrapper);
+                });
+
+                // activează lightGallery DOAR pentru imagini
+                galleryEl.addEventListener('click', function (e) {
+                    const img = e.target.closest('.item')?.querySelector("img");
+                    if (!img) return;
+                    const index = [...galleryEl.querySelectorAll('.item img')].indexOf(img);
+                    lightGallery(galleryEl, {
+                        dynamic: true,
+                        dynamicEl: dynamicEl,
+                        plugins: [lgZoom, lgThumbnail],
+                        speed: 300
+                    }).openGallery(index);
+                });
+            })
+            .catch(err => {
+                errorEl.textContent = "❌ Eroare la încărcare: " + err.message;
+            });
+    }
+</script>
+
+</body>
+</html>

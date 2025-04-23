@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Fișiere - DriveStudio</title>
+    <link rel="stylesheet" href="/user-files.css">
+</head>
+<body>
+<div class="container">
+    <img src="/img/logo.png" alt="DriveStudio Logo" class="logo">
+    <h1>Încarcă un fișier</h1>
+
+    <div id="drop-zone" class="drop-zone">
+        Trage fișierul aici sau apasă pentru a selecta
+        <input type="file" id="file-input" hidden>
+    </div>
+
+    <div id="file-preview" class="file-preview"></div>
+    <button id="upload-btn" class="btn-download btn-upload">Upload</button>
+    <div id="upload-result" class="success"></div>
+</div>
+
+<footer><p>Powered by Slavon</p></footer>
+
+<script src="/user-files.js"></script>
+</body>
+</html>
