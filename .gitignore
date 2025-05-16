@@ -1,39 +1,40 @@
-HELP.md
+# Build
 target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea/
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+*.class
 
-### VS Code ###
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Eclipse / STS
+.project
+.classpath
+.settings/
+.apt_generated/
+.factorypath
+
+# VS Code
 .vscode/
 
-### Fi?iere mari ###
-uploads/
-*.mp4
+# Maven
+.mvn/
+!mvn/wrapper/maven-wrapper.jar
+
+# Test / log / cache
+*.log
 *.zip
 *.rar
+*.tar
+*.gz
+
+# Fișiere de upload
+uploads/
+*.mp4
+*.mov
+*.avi
+
+# Alte fișiere mari
+*.iso
+*.7z
+*.exe

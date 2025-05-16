@@ -4,6 +4,7 @@ import md.drivestudio.drivestudio.entity.UploadedFile;
 import md.drivestudio.drivestudio.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,5 +27,17 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
 
     // ✅ Șterge toate fișierele unui utilizator (opțional)
     void deleteByUser(User user);
+    // 🔥 Fișierele dintr-un anumit folder
+    List<UploadedFile> findByUserAndFolderId(User user, Long folderId);
+
+    // 🔥 Fișierele din rădăcină (fără mapă)
+    List<UploadedFile> findByUserAndFolderIdIsNull(User user);
+
+    List<UploadedFile> findByFolderId(Long folderId);
+
+    List<UploadedFile> findByFolderIdIn(Collection<Long> folderIds);
+
+
+
 }
 

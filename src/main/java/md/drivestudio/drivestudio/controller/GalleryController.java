@@ -23,11 +23,28 @@ public class GalleryController {
         List<FileDTO> dtos = files.stream()
                 .map(file -> new FileDTO(
                         file.getFilename(),
+                        file.getUniqueId(),
                         file.getFileType(),
-                        file.getUniqueId()
+                        file.getSize(),
+                        file.getGalleryId()
                 ))
                 .toList();
 
+
         return ResponseEntity.ok(dtos);
     }
+    @GetMapping("/file/{id}")
+    public ResponseEntity<FileDTO> getFileByUniqueId(@PathVariable String id) {
+        return fileRepository.findByUniqueId(id)
+                .map(file -> ResponseEntity.ok(new FileDTO(
+                        file.getFilename(),
+                        file.getUniqueId(),
+                        file.getFileType(),
+                        file.getSize(),
+                        file.getGalleryId()
+                )))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
 }

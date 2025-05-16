@@ -25,16 +25,24 @@ public class UserFilesController {
 
     // ✅ Returnează fișierele utilizatorului logat
     @GetMapping("/files")
-    public ResponseEntity<List<UploadedFile>> getOwnFiles(HttpSession session) {
+    public ResponseEntity<List<UploadedFile>> getOwnFiles(
+            @RequestParam(value = "folderId", required = false) Long folderId,
+            HttpSession session) {
+
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        List<UploadedFile> files = fileRepository.findByUser(user);
-        files.sort(Comparator.comparing(UploadedFile::getUploadDate).reversed()); // cele mai noi primele
+        List<UploadedFile> files = (folderId == null)
+                ? fileRepository.findByUserAndFolderIdIsNull(user)
+                : fileRepository.findByUserAndFolderId(user, folderId);
+
+        files.sort(Comparator.comparing(UploadedFile::getUploadDate).reversed());
         return ResponseEntity.ok(files);
     }
+
+
 
 
     // ✅ Obține spațiul folosit și limita maximă

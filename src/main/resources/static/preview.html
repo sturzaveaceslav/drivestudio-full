@@ -14,19 +14,16 @@
             padding: 30px;
             text-align: center;
         }
-
         h1 {
             margin-bottom: 30px;
             font-size: 28px;
         }
-
         .gallery-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 20px;
         }
-
         .item {
             width: 250px;
             background: #1f1f1f;
@@ -35,27 +32,21 @@
             cursor: pointer;
             transition: transform 0.2s ease-in-out;
         }
-
         .item:hover {
             transform: scale(1.02);
         }
-
-        .item img,
-        .item video,
-        .item iframe {
+        .item img, .item video, .item iframe {
             width: 100%;
             border-radius: 8px;
             margin-bottom: 10px;
             max-height: 180px;
             object-fit: cover;
         }
-
         .item p {
             font-size: 14px;
             color: #ccc;
             margin: 5px 0;
         }
-
         .btn {
             display: inline-block;
             background-color: #00c853;
@@ -65,19 +56,16 @@
             border-radius: 5px;
             font-weight: bold;
             text-decoration: none;
-            margin-top: 5px;
+            margin: 10px 0;
         }
-
         .btn:hover {
             background-color: #00a040;
         }
-
         #error {
             color: red;
             font-weight: bold;
             margin-top: 20px;
         }
-
         footer {
             margin-top: 60px;
             color: #777;
@@ -86,10 +74,10 @@
 </head>
 <body>
 
+<button id="downloadGalleryBtn" class="btn">⬇️ Descarcă toată galeria</button>
 <h1>📁 Galeria ta - DriveStudio</h1>
 <div id="gallery" class="gallery-grid"></div>
 <p id="error"></p>
-
 <footer>Powered by Slavon ❤️</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.umd.min.js"></script>
@@ -97,22 +85,44 @@
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.umd.min.js"></script>
 
 <script>
-    const galleryId = new URLSearchParams(window.location.search).get("id");
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawId = urlParams.get("id");
+    const folderId = urlParams.get("folderId");
     const galleryEl = document.getElementById("gallery");
     const errorEl = document.getElementById("error");
 
-    if (!galleryId) {
-        errorEl.textContent = "❌ ID-ul galeriei lipsește!";
+    let galleryId = null;
+
+    try {
+        const parsed = JSON.parse(rawId);
+        galleryId = parsed.galleryId;
+    } catch (e) {
+        galleryId = rawId;
+    }
+
+    if (!galleryId && !folderId) {
+        errorEl.textContent = "❌ ID-ul galeriei sau folderului lipsește!";
     } else {
-        fetch(`/api/gallery/${galleryId}`)
+        const endpoint = galleryId
+            ? `/gallery/${galleryId}`
+            : `/api/user/folders/${folderId}/files`;
+
+        fetch(endpoint)
             .then(res => {
-                if (!res.ok) throw new Error(`Cod HTTP: ${res.status}`);
+                if (!res.ok) {
+                    if (galleryId) {
+                        return fetch(`/api/gallery/file/${galleryId}`)
+                            .then(r => {
+                                if (!r.ok) throw new Error("Nu există galerie sau fișier!");
+                                return r.json().then(f => [f]);
+                            });
+                    }
+                    throw new Error("Galerie inexistentă");
+                }
                 return res.json();
             })
             .then(files => {
-                if (!Array.isArray(files)) throw new Error("Răspuns invalid (nu este listă JSON)");
-
-                if (files.length === 0) {
+                if (!Array.isArray(files) || files.length === 0) {
                     errorEl.textContent = "❌ Galeria este goală.";
                     return;
                 }
@@ -134,10 +144,12 @@
                             subHtml: `<h4>${filename}</h4>`
                         });
                     } else if (file.fileType?.startsWith("video/")) {
-                        content = `
-                            <video controls>
-                                <source src="${url}" type="${file.fileType}">
-                            </video>`;
+                        content = `<video controls preload="metadata" style="max-height: 180px; border-radius: 8px;">
+    <source src="${url}" type="video/mp4">
+    <source src="${url}" type="${file.fileType}">
+    Your browser does not support the video tag.
+</video>
+`;
                     } else if (file.fileType === "application/pdf") {
                         content = `<iframe src="${url}" height="200"></iframe>`;
                     } else {
@@ -152,7 +164,6 @@
                     galleryEl.appendChild(wrapper);
                 });
 
-                // activează lightGallery DOAR pentru imagini
                 galleryEl.addEventListener('click', function (e) {
                     const img = e.target.closest('.item')?.querySelector("img");
                     if (!img) return;
@@ -168,8 +179,17 @@
             .catch(err => {
                 errorEl.textContent = "❌ Eroare la încărcare: " + err.message;
             });
+
+        document.getElementById("downloadGalleryBtn").addEventListener("click", () => {
+            if (galleryId) {
+                window.open(`/gallery/${galleryId}/download-zip`, "_blank");
+            } else if (folderId) {
+                window.open(`/api/user/folders/${folderId}/download-zip`, "_blank");
+            } else {
+                alert("❌ ID invalid pentru descărcare.");
+            }
+        });
     }
 </script>
-
 </body>
 </html>

@@ -19,4 +19,8 @@ public class UserFolder {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private UserFolder parent; // 🔥 Aici legăm subfolderul de o mapă părinte
 }

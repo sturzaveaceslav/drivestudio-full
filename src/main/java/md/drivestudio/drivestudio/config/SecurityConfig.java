@@ -44,7 +44,11 @@ public class SecurityConfig {
                                 "/preview.html", "/gallery/**", "/gallery/*/download-zip",
                                 "/h2-console/**",
                                 "/api/auth/**", "/api/files/info/**",
-                                "/api/gallery/**"
+                                "/api/gallery/**",
+                                "/api/folders/*/files**",
+                                "/api/folders/*/download-zip**",
+                                "/api/user/folders/**"
+
                         ).permitAll()
 
                         // ✅ Upload anonim

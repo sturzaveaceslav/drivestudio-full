@@ -17,12 +17,12 @@ public class UploadedFile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("uniqueId") // ✅ folosit pentru /s/{uniqueId}
+    @JsonProperty("uniqueId")
     private String uniqueId;
 
     private String filename;
 
-    @JsonProperty("fileType") // ✅ inclus în JSON pentru preview video/img/pdf
+    @JsonProperty("fileType")
     private String fileType;
 
     private long size;
@@ -35,10 +35,14 @@ public class UploadedFile {
     private User user;
 
     @Column(name = "folder_name")
-    @JsonProperty("folderName") // ✅ trimis la frontend
+    @JsonProperty("folderName")
     private String folderName;
 
-    // 👇 Gettere explicite pentru a te asigura că apar în JSON
+    @Column(name = "folder_id")
+    @JsonProperty("folderId") // 🔥 se trimite către frontend
+    private Long folderId;
+
+    // 👇 Getter-ele explicite (pentru frontend JS care se bazează pe JSON fix)
     public String getUniqueId() {
         return uniqueId;
     }
@@ -65,5 +69,9 @@ public class UploadedFile {
 
     public Date getUploadDate() {
         return uploadDate;
+    }
+
+    public Long getFolderId() {
+        return folderId;
     }
 }

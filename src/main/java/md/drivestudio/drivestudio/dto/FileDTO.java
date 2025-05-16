@@ -8,7 +8,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileDTO {
-    private String filename;   // ex: poza.jpg
-    private String fileType;   // ex: image/jpeg, video/mp4, application/pdf
-    private String uniqueId;   // ex: a1b2c3 (pentru /s/{id})
+    private String filename;
+    private String uniqueId;
+    private String fileType;
+    private long size;
+    private String galleryId; // ← adaugă acest câmp
+
+    // Getteri și setteri
 }
+

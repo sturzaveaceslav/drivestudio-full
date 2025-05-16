@@ -240,4 +240,23 @@ public class AdminController {
 
         return ResponseEntity.ok("Galerie încărcată cu succes");
     }
+    @PutMapping("/api/admin/galleries/{galleryId}/move")
+    public ResponseEntity<String> moveGallery(@PathVariable String galleryId,
+                                              @RequestParam Long newFolderId,
+                                              HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.getRole().name().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Nu ai drepturi.");
+        }
+
+        List<UploadedFile> files = fileRepository.findByGalleryId(galleryId);
+        for (UploadedFile f : files) {
+            f.setFolderId(newFolderId); // 📁 mută mapa!
+        }
+        fileRepository.saveAll(files);
+
+        return ResponseEntity.ok("Galeria a fost mutată cu succes.");
+    }
+
+
 }

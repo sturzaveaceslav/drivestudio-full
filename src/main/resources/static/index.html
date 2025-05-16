@@ -126,7 +126,7 @@
 </div>
 
 <footer>
-    <p>Powered by Slavon</p>
+    <p>Powered by Slavon ❤️</p>
 </footer>
 
 <script>
@@ -146,7 +146,6 @@
             return;
         }
 
-        // 🔍 Verificare dimensiune totală
         let totalSize = 0;
         for (let f of files) totalSize += f.size;
 
@@ -165,10 +164,8 @@
 
         const formData = new FormData();
         for (let file of files) {
-            formData.append("files", file); // ✅ corect
-
+            formData.append("files", file);
         }
-
         if (customName) {
             formData.append("customName", customName);
         }
@@ -185,12 +182,30 @@
 
         xhr.onload = function () {
             if (xhr.status === 200) {
-                const id = xhr.responseText.replace(/[\[\]"]+/g, "");
-                const link = `${window.location.origin}/preview.html?id=${encodeURIComponent(id)}`;
+                let response;
+                try {
+                    response = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    errorMsg.textContent = "❌ Eroare la parsarea răspunsului serverului.";
+                    return;
+                }
+
+                const galleryId = response.galleryId;
+                const link = `/preview.html?id=${galleryId}`;
+
+                // 🟢 AICI: redirecționare directă după upload (activează dacă vrei)
+                // window.location.href = link;
+
                 uploadResult.innerHTML = `
-                    <p style="color: lightgreen;">✅ Link generat:<br><a href="${link}" target="_blank">${link}</a></p>
-                    ${!token ? "<p style='color: #ffeb3b;'>⏳ Fișierele anonime vor fi șterse automat în 3 zile!</p>" : ""}
-                `;
+    <p style="color: lightgreen;">✅ Link generat:<br><a href="${link}" target="_blank">${link}</a></p>
+    <p style='color: #ffeb3b;'>
+        ${!token
+                    ? "⏳ Fișierele tale anonime vor fi șterse automat în 3 zile. Loghează-te pentru salvare permanentă."
+                    : "✅ Fișierele tale sunt salvate permanent în contul tău."
+                }
+    </p>
+`;
+
                 document.getElementById("linkButtons").style.display = "block";
                 document.getElementById("linkButtons").setAttribute("data-link", link);
             } else {
@@ -199,7 +214,7 @@
         };
 
         xhr.onerror = function () {
-            errorMsg.textContent = "❌ Fișierele anonime pot avea maxim 500MB. Autentifică-te pentru a încărca până la 2GB";
+            errorMsg.textContent = "❌ Eroare rețea la încărcare.";
         };
 
         xhr.send(formData);

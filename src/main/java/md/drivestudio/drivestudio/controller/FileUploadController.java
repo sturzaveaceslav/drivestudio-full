@@ -1,6 +1,7 @@
 package md.drivestudio.drivestudio.controller;
 
 import jakarta.servlet.http.HttpSession;
+import md.drivestudio.drivestudio.dto.FileDTO;
 import md.drivestudio.drivestudio.dto.UserStatsDTO;
 import md.drivestudio.drivestudio.entity.UploadedFile;
 import md.drivestudio.drivestudio.model.User;
@@ -39,25 +40,12 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFiles(@RequestParam("files") MultipartFile[] files,
-                                              @RequestParam(value = "customName", required = false) String customName,
-                                              HttpSession session,
-                                              @RequestParam(value = "targetUserId", required = false) Long targetUserId) {
-        User user = (User) session.getAttribute("user");
+    public ResponseEntity<?> uploadUniversal(@RequestParam("files") MultipartFile[] files,
+                                             @RequestParam(value = "customName", required = false) String customName,
+                                             HttpSession session) {
 
-        long totalSize = Arrays.stream(files).filter(f -> !f.isEmpty()).mapToLong(MultipartFile::getSize).sum();
-
-        if (user == null && totalSize > 500 * 1024 * 1024) {
-            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("⚠️ Anonimii pot încărca max. 500MB.");
-        }
-
-        if (user != null && user.getRole().name().equals("USER")) {
-            long current = fileRepository.findByUser(user).stream().mapToLong(UploadedFile::getSize).sum();
-            if (current + totalSize > user.getMaxUploadSize()) {
-                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("⚠️ Ai depășit limita. Șterge fișiere.");
-            }
-        }
-
+        User sessionUser = (User) session.getAttribute("user"); // poate fi null (anonim)
+        User user = sessionUser; // poate fi null = anonim
         String galleryId = UUID.randomUUID().toString().substring(0, 8);
 
         try {
@@ -69,40 +57,89 @@ public class FileUploadController {
 
                 String uniqueId = UUID.randomUUID().toString().substring(0, 6);
                 String originalName = file.getOriginalFilename();
-
-                // ✅ Extragem extensia
                 String extension = (originalName != null && originalName.contains("."))
                         ? originalName.substring(originalName.lastIndexOf("."))
                         : "";
-
-                // ✅ Adăugăm extensia dacă lipsește
-                String baseName = customName != null && !customName.isBlank() ? customName : originalName;
+                String baseName = (customName != null && !customName.isBlank()) ? customName : originalName;
                 String finalName = uniqueId + "_" + baseName;
-                if (!finalName.endsWith(extension)) {
-                    finalName += extension;
-                }
+                if (!finalName.endsWith(extension)) finalName += extension;
 
                 Path path = uploadPath.resolve(finalName);
                 Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-                String fileType = file.getContentType();
-                if (fileType == null || fileType.isBlank()) {
-                    fileType = Files.probeContentType(path);
-                }
-                if (fileType == null || fileType.isBlank()) {
-                    fileType = "application/octet-stream";
-                }
 
                 UploadedFile uf = new UploadedFile();
                 uf.setUniqueId(uniqueId);
                 uf.setFilename(finalName);
                 uf.setPath(path.toString());
-                uf.setFileType(fileType);
                 uf.setSize(file.getSize());
+                uf.setFileType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
                 uf.setUploadDate(new Date());
                 uf.setGalleryId(galleryId);
                 uf.setFolderName(customName);
-                if (user != null) uf.setUser(user);
+                uf.setFolderId(null);
+                uf.setUser(user); // poate fi null (anonim)
+
+                fileRepository.save(uf);
+            }
+
+            return ResponseEntity.ok(Map.of("galleryId", galleryId));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/upload2") // sau /api/admin/upload-alt
+    public ResponseEntity<String> adminUpload(@RequestParam("files") MultipartFile[] files,
+                                              @RequestParam(value = "customName", required = false) String customName,
+                                              @RequestParam(value = "folderId", required = false) Long folderId,
+                                              @RequestParam(value = "targetUserId", required = false) Long targetUserId,
+                                              HttpSession session) {
+
+        User sessionUser = (User) session.getAttribute("user");
+        if (sessionUser == null || !sessionUser.getRole().name().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Nu ai drepturi.");
+        }
+
+        User user = sessionUser;
+        if (targetUserId != null) {
+            Optional<User> target = userRepository.findById(targetUserId);
+            if (target.isPresent()) user = target.get();
+        }
+
+        String galleryId = UUID.randomUUID().toString().substring(0, 8);
+        long totalSize = Arrays.stream(files).filter(f -> !f.isEmpty()).mapToLong(MultipartFile::getSize).sum();
+
+        try {
+            Path uploadPath = Paths.get(uploadDirectory);
+            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                String uniqueId = UUID.randomUUID().toString().substring(0, 6);
+                String originalName = file.getOriginalFilename();
+                String extension = originalName != null && originalName.contains(".")
+                        ? originalName.substring(originalName.lastIndexOf("."))
+                        : "";
+                String baseName = (customName != null && !customName.isBlank()) ? customName : originalName;
+                String finalName = uniqueId + "_" + baseName;
+                if (!finalName.endsWith(extension)) finalName += extension;
+
+                Path path = uploadPath.resolve(finalName);
+                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+                UploadedFile uf = new UploadedFile();
+                uf.setUniqueId(uniqueId);
+                uf.setFilename(finalName);
+                uf.setPath(path.toString());
+                uf.setSize(file.getSize());
+                uf.setFileType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
+                uf.setUploadDate(new Date());
+                uf.setGalleryId(galleryId);
+                uf.setFolderName(customName);
+                uf.setFolderId(folderId); // 🔥 AICI salvezi în folderul corect!
+                uf.setUser(user);
 
                 fileRepository.save(uf);
             }
@@ -112,6 +149,8 @@ public class FileUploadController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Eroare: " + e.getMessage());
         }
     }
+
+
 
     @GetMapping("/s/{id}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String id) {
@@ -161,7 +200,6 @@ public class FileUploadController {
         ));
     }
 
-
     @GetMapping("/gallery/{galleryId}")
     public ResponseEntity<List<UploadedFile>> getFilesByGallery(@PathVariable String galleryId) {
         List<UploadedFile> files = fileRepository.findByGalleryId(galleryId);
@@ -197,4 +235,20 @@ public class FileUploadController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    @GetMapping("/api/file/{uniqueId}")
+    public ResponseEntity<FileDTO> getFileByUniqueId(@PathVariable String uniqueId) {
+        Optional<UploadedFile> fileOpt = fileRepository.findByUniqueId(uniqueId);
+        if (fileOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        UploadedFile f = fileOpt.get();
+        FileDTO dto = new FileDTO(
+                f.getFilename(),
+                f.getUniqueId(),
+                f.getFileType(),
+                f.getSize(),
+                f.getGalleryId()
+        );
+        return ResponseEntity.ok(dto);
+    }
+
 }

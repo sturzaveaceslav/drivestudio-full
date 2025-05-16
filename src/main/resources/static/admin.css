@@ -1,0 +1,329 @@
+<style>
+.gallery-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+.gallery-actions button {
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #444;
+    color: white;
+    transition: background-color 0.2s;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: url("/img/despre.gif") no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    padding: 30px;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: -1;
+}
+
+h1, h2 {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 26px;
+    color: gold;
+}
+
+.logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+.logo img {
+    height: 50px;
+}
+
+#upload-form {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    box-shadow: 0 0 10px #000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#upload-form input[type="text"],
+#upload-form input[type="file"],
+#upload-form select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background-color: #333;
+    color: #fff;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-upload {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn-folder {
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+}
+
+.btn-view {
+    background-color: #00bcd4;
+    color: white;
+}
+
+.btn-download {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn:hover {
+    filter: brightness(1.1);
+}
+#progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #00c853;
+    transition: width 0.3s ease;
+}
+
+#progress-percent {
+    text-align: right;
+    font-weight: bold;
+    font-size: 14px;
+    color: limegreen;
+}
+
+.file-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.folder-card {
+    width: 140px;
+    background-color: #1d1d1d;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 0 5px #000;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.folder-card:hover {
+    transform: scale(1.05);
+}
+
+.folder-card img {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 6px;
+    object-fit: contain;
+}
+
+.folder-card span.folder-name {
+    display: block;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 6px;
+    overflow-wrap: break-word;
+}
+
+.gallery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+}
+
+.gallery-actions button {
+    border: none;
+    background: #333;
+    color: white;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.gallery-actions button:hover {
+    filter: brightness(1.3);
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 30px 0;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #333;
+    text-align: center;
+    font-size: 14px;
+}
+.breadcrumb {
+    margin: 20px auto;
+    text-align: center;
+    color: gold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.breadcrumb-part:hover {
+    text-decoration: underline;
+}
+
+.folder-actions {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.file-container {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.folder-card, .file-card {
+    width: 110px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    background-color: #222;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.folder-card:hover, .file-card:hover {
+    transform: scale(1.05);
+}
+
+.folder-card img, .file-card img {
+    width: 100%;
+    max-height: 60px; /* sau 80px dacă vrei și mai mic */
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.folder-card span, .file-card span {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #eee;
+}
+
+
+th {
+    background-color: #292929;
+    color: #fff;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+input[type="text"], select {
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    background-color: #333;
+    color: white;
+}
+
+footer {
+    margin-top: 50px;
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+}
+
+.gallery-columns {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+.column {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 12px;
+    width: 280px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.3s;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+.column:hover {
+    transform: scale(1.05);
+    background-color: #333;
+}
+.column h3 {
+    margin-bottom: 10px;
+    color: gold;
+}
+.gallery-table {
+    margin-top: 20px;
+}
+.hidden {
+    display: none;
+}
+
+
+</style>
